@@ -29,6 +29,7 @@ public class GaussDBDemo {
                 System.out.println("\n欢迎使用GaussDBDemo程序，我们提供以下服务：");
                 System.out.println("1. 简单增删改");
                 System.out.println("2. 查询");
+                System.out.println("3. 进阶查询");
                 System.out.println("0. 退出程序");
                 System.out.println("请输入你想要执行的功能编号：");
                 choice = sc.nextInt(); // 接收用户输入的整数
@@ -45,6 +46,7 @@ public class GaussDBDemo {
                         System.out.println("0. 返回上一级菜单。");
                         System.out.println("请输入你想要执行的功能编号：");
                         int query1 = sc.nextInt(); // 接收用户输入的整数
+                        System.out.println();
                         switch (query1) {
                             case 1:
                                 // 增删改1：更新用户1的状态为2（离线）
@@ -104,6 +106,7 @@ public class GaussDBDemo {
                         System.out.println("0. 返回上一级菜单。");
                         System.out.println("请输入你想要执行的查询编号：");
                         int query2 = sc.nextInt(); // 接收用户输入的整数
+                        System.out.println();
                         switch (query2) {
                             case 1:
                                 // 查询1：列出每一个用户在每一个设备类型上登录微信次数,按照微信号从小到大输出，相同的微信号，按照登录次数从高到低输出。
@@ -193,6 +196,58 @@ public class GaussDBDemo {
                                     System.out.print("(" + uid1 + "," + uid2 + "," + mutual + ")\n");
                                 }
                                 rs6.close(); // 关闭结果集对象
+                                break;
+                            case 0:
+                                // 返回上一级菜单
+                                System.out.println("返回上一级菜单。");
+                                break;
+                            default:
+                                // 输入无效的编号
+                                System.out.println("请输入有效的编号！");
+                                break;
+                        }
+                        break;
+                    case 3:
+                        // 功能3：执行进阶查询功能
+                        System.out.println("\n1. 统计每一对用户之间的发送信息的数目。");
+                        System.out.println(
+                                "2. 查询2024年3月份，每一个用户转出总额，转入总额。");
+                        System.out.println("0. 返回上一级菜单。");
+                        System.out.println("请输入你想要执行的查询编号：");
+                        int query3 = sc.nextInt(); // 接收用户输入的整数
+                        System.out.println();
+                        switch (query3) {
+                            case 1:
+                                // 查询1：统计每一对用户之间的发送信息的数目，例如1向2发送了5条信息，同时2向1发送了4条消息，那么他们之间的消息就是9条
+                                sql = "SELECT tmp1.UID1 AS UID1_1,tmp1.UID2 AS UID1_2,tmp1.total+tmp2.total AS total FROM (SELECT UID1,UID2,Count(*) AS total FROM  Messages GROUP BY UID1,UID2) tmp1 JOIN (SELECT UID1,UID2,Count(*) AS total FROM Messages GROUP BY UID1,UID2) tmp2 ON tmp1.UID1=tmp2.uid2 and tmp1.uid2=tmp2.uid1 UNION SELECT tmp5.UID1,tmp5.UID2,tmp5.total1 FROM ((SELECT UID1,UID2,Count(*) as total1 FROM Messages GROUP BY UID1,UID2) tmp3 LEFT  JOIN (select UID1,UID2,Count(*) as total2 FROM Messages GROUP BY UID1,UID2) tmp4 ON tmp3.UID1=tmp4.uid2 and tmp3.uid2=tmp4.uid1) AS tmp5(uid1,uid2,total1,uid3,uid4,total2) WHERE total2 IS null";
+                                ResultSet rs7 = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("每一对用户之间的发送信息的数目：");
+                                while (rs7.next()) {
+                                    // 通过字段检索
+                                    int uid1 = rs7.getInt("UID1_1");
+                                    int uid2 = rs7.getInt("UID1_2");
+                                    int total = rs7.getInt("total");
+
+                                    // 输出数据
+                                    System.out.print("(" + uid1 + "," + uid2 + "," + total + ")\n");
+                                }
+                                rs7.close(); // 关闭结果集对象
+                                break;
+                            case 2:
+                                // 查询2：查询2024年3月份，每一个用户转出总额，转入总额，如果两项都为零，不需要列出。如果一项有，另外一项没有，没有的显示为0。例如用户3只收到1笔1000转入金额，那么显示（3，null，1000）
+                                sql = "SELECT UID1 AS UID1_1, tmp1.AllOut AS ALLOut, tmp2.AllIn as ALLin FROM (SELECT UID1, SUM(amount) AS AllOut FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID1) tmp1 LEFT JOIN (SELECT UID2, SUM(amount) AS AllIn FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID2) tmp2 ON tmp1.UID1 = tmp2.UID2 UNION SELECT UID2, tmp3.AllOut, tmp4.AllIn FROM (SELECT UID1, SUM(amount) AS AllOut FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID1)tmp3 RIGHT JOIN (SELECT UID2, SUM(amount) AS AllIn FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID2) tmp4 ON tmp3.UID1 = tmp4.UID2";
+                                ResultSet rs8 = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("每一个用户转出总额，转入总额：");
+                                while (rs8.next()) {
+                                    // 通过字段检索
+                                    int uid = rs8.getInt("UID1_1");
+                                    int allOut = rs8.getInt("AllOut");
+                                    int allIn = rs8.getInt("AllIn");
+
+                                    // 输出数据
+                                    System.out.print("(" + uid + "," + allOut + "," + allIn + ")\n");
+                                }
+                                rs8.close(); // 关闭结果集对象
                                 break;
                             case 0:
                                 // 返回上一级菜单
