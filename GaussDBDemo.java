@@ -377,43 +377,128 @@ public class GaussDBDemo {
                         break;
                     case 3:
                         // 功能3：执行进阶查询功能
-                        System.out.println("\n1. 统计每一对用户之间的发送信息的数目。");
-                        System.out.println(
-                                "2. 查询2024年3月份，每一个用户转出总额，转入总额。");
+                        System.out.println("\n1. 重建Friend表。");
+                        System.out.println("2. 列出用户1的好友。");
+                        System.out.println("3. 统计每一个用户的好友数目。");
+                        System.out.println("4. 列出具有4个共同好友以上（包含），但自身不是好友的用户对。");
+                        System.out.println("5. 查询2024年3月份，既有转出又有转入的用户，以及各自相应的总金额。");
+                        System.out.println("6. 查询2024年3月份，每一个用户转出总额，转入总额。");
+                        System.out.println("7. 统计每一对用户之间的发送信息的数目。");
                         System.out.println("0. 返回上一级菜单。");
                         System.out.println("请输入你想要执行的查询编号：");
                         int query3 = sc.nextInt(); // 接收用户输入的整数
                         System.out.println();
                         switch (query3) {
                             case 1:
-                                // 查询1：统计每一对用户之间的发送信息的数目，例如1向2发送了5条信息，同时2向1发送了4条消息，那么他们之间的消息就是9条
-                                sql = "SELECT tmp1.UID1 AS UID1_1,tmp1.UID2 AS UID1_2,tmp1.total+tmp2.total AS total FROM (SELECT UID1,UID2,Count(*) AS total FROM  Messages GROUP BY UID1,UID2) tmp1 JOIN (SELECT UID1,UID2,Count(*) AS total FROM Messages GROUP BY UID1,UID2) tmp2 ON tmp1.UID1=tmp2.uid2 and tmp1.uid2=tmp2.uid1 UNION SELECT tmp5.UID1,tmp5.UID2,tmp5.total1 FROM ((SELECT UID1,UID2,Count(*) as total1 FROM Messages GROUP BY UID1,UID2) tmp3 LEFT  JOIN (select UID1,UID2,Count(*) as total2 FROM Messages GROUP BY UID1,UID2) tmp4 ON tmp3.UID1=tmp4.uid2 and tmp3.uid2=tmp4.uid1) AS tmp5(uid1,uid2,total1,uid3,uid4,total2) WHERE total2 IS null";
+                                // 进阶查询1：重建Friend表
+                                stmt.executeUpdate("DELETE FROM \"Schema_ljh_zzh\".Friend"); // 清空Friend表
+                                sql = "INSERT INTO \"Schema_ljh_zzh\".Friend (UID1, UID2, AddTime) VALUES"; // 定义插入语句的前半部分
+                                System.out.println("请输入你想要重建的Friend表的元组，元组间以逗号分隔，以分号结束：");
+                                sc.nextLine(); // 清除缓冲区
+                                String rebuild = ""; // 初始化重建语句为空字符串
+                                String line = ""; // 初始化每一行的输入为空字符串
+                                do {
+                                    line = sc.nextLine(); // 接收用户输入的一行
+                                    rebuild += line + "\n"; // 将每一行的输入拼接到重建语句中，并换行
+                                } while (!line.endsWith(";")); // 循环直到用户输入的一行以分号结束
+                                try {
+                                    stmt.executeUpdate(sql + rebuild); // 执行重建语句
+                                    System.out.println("Friend表已重建。");
+                                } catch (SQLException se) {
+                                    // 处理SQL错误
+                                    System.out.println("重建Friend表失败，请检查你输入的元组格式是否正确。");
+                                    se.printStackTrace();
+                                }
+                                break;
+                            case 2:
+                                // 进阶查询2：列出用户1的好友
+                                sql = "SELECT UID2 FROM \"Schema_ljh_zzh\".Friend WHERE UID1 = 1 UNION SELECT UID1 FROM \"Schema_ljh_zzh\".Friend WHERE UID2 = 1";
                                 rs = stmt.executeQuery(sql); // 执行查询语句
-                                System.out.println("每一对用户之间的发送信息的数目：");
+                                System.out.println("用户1的好友：");
                                 while (rs.next()) {
                                     // 通过字段检索
-                                    int uid1 = rs.getInt("UID1_1");
-                                    int uid2 = rs.getInt("UID1_2");
-                                    int total = rs.getInt("total");
+                                    int uid = rs.getInt("UID2");
 
                                     // 输出数据
-                                    System.out.print("(" + uid1 + "," + uid2 + "," + total + ")\n");
+                                    System.out.print(uid + "\n");
                                 }
                                 rs.close(); // 关闭结果集对象
                                 break;
-                            case 2:
-                                // 查询2：查询2024年3月份，每一个用户转出总额，转入总额，如果两项都为零，不需要列出。如果一项有，另外一项没有，没有的显示为0。例如用户3只收到1笔1000转入金额，那么显示（3，null，1000）
-                                sql = "SELECT UID1 AS UID1_1, tmp1.AllOut AS ALLOut, tmp2.AllIn as ALLin FROM (SELECT UID1, SUM(amount) AS AllOut FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID1) tmp1 LEFT JOIN (SELECT UID2, SUM(amount) AS AllIn FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID2) tmp2 ON tmp1.UID1 = tmp2.UID2 UNION SELECT UID2, tmp3.AllOut, tmp4.AllIn FROM (SELECT UID1, SUM(amount) AS AllOut FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID1)tmp3 RIGHT JOIN (SELECT UID2, SUM(amount) AS AllIn FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID2) tmp4 ON tmp3.UID1 = tmp4.UID2";
+                            case 3:
+                                // 进阶查询3：统计每一个用户的好友数目
+                                sql = "SELECT f1.UID1, count(*) + (SELECT COUNT(*) FROM \"Schema_ljh_zzh\".Friend F2 WHERE f2.uid2 = f1.uid1) AS Friends FROM \"Schema_ljh_zzh\".Friend f1 GROUP BY f1.UID1 UNION SELECT f3.UID2 AS UID, count(*) + (SELECT COUNT(*) FROM \"Schema_ljh_zzh\".Friend F4 WHERE f4.uid1 = f3.uid2) AS Friends FROM \"Schema_ljh_zzh\".Friend f3 GROUP BY f3.UID2";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("用户ID\t好友数目");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid = rs.getInt("UID1");
+                                    int friends = rs.getInt("Friends");
+
+                                    // 输出数据
+                                    System.out.print(uid + "\t" + friends + "\n");
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 4:
+                                // 进阶查询4：列出具有4个共同好友以上（包含），但自身不是好友的用户对，每一个用户对只列一次
+                                sql = "SELECT a AS uid1, b AS uid2 FROM (SELECT f1.uid1 AS a, f2.uid1 AS b, f1.uid2 AS c FROM \"Schema_ljh_zzh\".Friend f1, \"Schema_ljh_zzh\".Friend f2 WHERE f1.uid2 = f2.uid2 AND f1.uid1 < f2.uid1 UNION SELECT f3.uid1 AS a, f4.uid2 AS b, f3.uid2 AS c FROM \"Schema_ljh_zzh\".Friend f3, \"Schema_ljh_zzh\".Friend f4 WHERE f3.uid2 = f4.uid1 AND f3.uid1 < f4.uid2 UNION SELECT f5.uid2 AS a, f6.uid2 AS b, f5.uid1 AS c FROM \"Schema_ljh_zzh\".Friend f5, \"Schema_ljh_zzh\".Friend f6 WHERE f5.uid1 = f6.uid1 AND f5.uid2 < f6.uid2 UNION SELECT f7.uid2 AS a, f8.uid1 AS b, f7.uid1 AS c FROM \"Schema_ljh_zzh\".Friend f7, \"Schema_ljh_zzh\".Friend f8 WHERE f7.uid1 = f8.uid2 AND f7.uid2 < f8.uid1) tmp WHERE tmp.a NOT IN (SELECT f9.uid1  FROM \"Schema_ljh_zzh\".Friend f9  WHERE tmp.b = f9.uid2 UNION SELECT f10.uid2 FROM \"Schema_ljh_zzh\".Friend f10  WHERE tmp.b = f10.uid1) GROUP BY a, b HAVING count(*) >= 4";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("具有4个共同好友以上，但自身不是好友的用户对：");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid1 = rs.getInt("uid1");
+                                    int uid2 = rs.getInt("uid2");
+
+                                    // 输出数据
+                                    System.out.print("(" + uid1 + "," + uid2 + ")\n");
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 5:
+                                // 进阶查询5：查询2024年3月份，既有转出又有转入的用户，以及各自相应的总金额
+                                sql = "SELECT UID1, tmp1.AllOut, tmp2.AllIn FROM (SELECT UID1, SUM(amount) AS AllOut FROM \"Schema_ljh_zzh\".Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID1) tmp1 JOIN (SELECT UID2, SUM(amount) AS AllIn FROM \"Schema_ljh_zzh\".Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID2) tmp2 ON tmp1.UID1 = tmp2.UID2";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.printf("%-8s\t%-8s\t%-8s\n", "用户ID", "转出金额", "转入金额");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid = rs.getInt("UID1");
+                                    int allOut = rs.getInt("AllOut");
+                                    int allIn = rs.getInt("AllIn");
+
+                                    // 输出数据
+                                    System.out.printf("%-8s\t%-8s\t%-8s\n", uid, allOut, allIn);
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 6:
+                                // 查询6：查询2024年3月份，每一个用户转出总额，转入总额，如果两项都为零，不需要列出。如果一项有，另外一项没有，没有的显示为0。例如用户3只收到1笔1000转入金额，那么显示（3，null，1000）
+                                sql = "SELECT UID1, tmp1.AllOut, tmp2.AllIn FROM (SELECT UID1, SUM(amount) AS AllOut FROM \"Schema_ljh_zzh\".Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID1) tmp1 LEFT JOIN (SELECT UID2, SUM(amount) AS AllIn FROM \"Schema_ljh_zzh\".Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID2) tmp2 ON tmp1.UID1 = tmp2.UID2 UNION SELECT UID2, tmp3.AllOut, tmp4.AllIn FROM (SELECT UID1, SUM(amount) AS AllOut FROM \"Schema_ljh_zzh\".Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID1)tmp3 RIGHT JOIN (SELECT UID2, SUM(amount) AS AllIn FROM \"Schema_ljh_zzh\".Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID2) tmp4 ON tmp3.UID1 = tmp4.UID2";
                                 rs = stmt.executeQuery(sql); // 执行查询语句
                                 System.out.println("每一个用户转出总额，转入总额：");
                                 while (rs.next()) {
                                     // 通过字段检索
-                                    int uid = rs.getInt("UID1_1");
+                                    int uid = rs.getInt("UID1");
                                     int allOut = rs.getInt("AllOut");
                                     int allIn = rs.getInt("AllIn");
 
                                     // 输出数据
                                     System.out.print("(" + uid + "," + allOut + "," + allIn + ")\n");
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 7:
+                                // 查询7：统计每一对用户之间的发送信息的数目，例如1向2发送了5条信息，同时2向1发送了4条消息，那么他们之间的消息就是9条
+                                sql = "SELECT tmp1.UID1,tmp1.UID2,tmp1.total+tmp2.total AS total FROM (SELECT UID1,UID2,Count(*) AS total FROM \"Schema_ljh_zzh\".Messages GROUP BY UID1,UID2) tmp1 JOIN (SELECT UID1,UID2,Count(*) AS total FROM \"Schema_ljh_zzh\".Messages GROUP BY UID1,UID2) tmp2 ON tmp1.UID1=tmp2.uid2 and tmp1.uid2=tmp2.uid1 UNION SELECT tmp5.UID1,tmp5.UID2,tmp5.total1 FROM ((SELECT UID1,UID2,Count(*) as total1 FROM \"Schema_ljh_zzh\".Messages GROUP BY UID1,UID2) tmp3 LEFT  JOIN (select UID1,UID2,Count(*) as total2 FROM \"Schema_ljh_zzh\".Messages GROUP BY UID1,UID2) tmp4 ON tmp3.UID1=tmp4.uid2 and tmp3.uid2=tmp4.uid1) AS tmp5(uid1,uid2,total1,uid3,uid4,total2) WHERE total2 IS null";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("每一对用户之间的发送信息的数目：");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid1 = rs.getInt("UID1");
+                                    int uid2 = rs.getInt("UID2");
+                                    int total = rs.getInt("total");
+
+                                    // 输出数据
+                                    System.out.print("(" + uid1 + "," + uid2 + "," + total + ")\n");
                                 }
                                 rs.close(); // 关闭结果集对象
                                 break;
