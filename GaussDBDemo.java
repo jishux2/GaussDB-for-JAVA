@@ -24,6 +24,7 @@ public class GaussDBDemo {
             System.out.println(" 实例化 Statement 对象...");
             stmt = conn.createStatement();
             String sql;
+            ResultSet rs;
             int choice; // 用于存储用户的选择
             do {
                 System.out.println("\n欢迎使用GaussDBDemo程序，我们提供以下服务：");
@@ -103,6 +104,16 @@ public class GaussDBDemo {
                         System.out.println("5. 统计用户1和用户3的共同好友的数量。");
                         System.out.println(
                                 "6. 统计每一个用户对之间的好友数量。");
+                        System.out.println("7. 显示没有共同好友的用户对。");
+                        System.out.println("8. 查询聊天记录中包含‘账号’两个字的用户聊天记录。");
+                        System.out.println("9. 查询只有聊天记录，但是没有转账记录的用户微信UID。");
+                        System.out.println("10. 统计用户1主动发送至少5条消息的用户及消息总条数。");
+                        System.out.println("11. 统计用户在2023年分别向哪些用户发送了多少条消息。");
+                        System.out.println("12. 查询使用‘KylinOS’登录微信账号的用户名。");
+                        System.out.println("13. 查询只使用KylinOS设备登录微信的用户账号。");
+                        System.out.println("14. 查询至少在两种设备上登录过微信账号的用户UID。");
+                        System.out.println("15. 查询在所有设备上均实现登录的微信用户名。");
+                        System.out.println("16. 查询连续七天之内有两笔向外转账的用户微信ID。");
                         System.out.println("0. 返回上一级菜单。");
                         System.out.println("请输入你想要执行的查询编号：");
                         int query2 = sc.nextInt(); // 接收用户输入的整数
@@ -111,91 +122,248 @@ public class GaussDBDemo {
                             case 1:
                                 // 查询1：列出每一个用户在每一个设备类型上登录微信次数,按照微信号从小到大输出，相同的微信号，按照登录次数从高到低输出。
                                 sql = "SELECT UID, Name, COUNT(*) AS Total FROM \"Schema_ljh_zzh\".Login, \"Schema_ljh_zzh\".Device WHERE Login.DID = Device.DID GROUP BY UID, Name ORDER BY UID, Total DESC";
-                                ResultSet rs1 = stmt.executeQuery(sql); // 执行查询语句
+                                rs = stmt.executeQuery(sql); // 执行查询语句
                                 System.out.println("用户ID\t设备名称\t登录次数");
-                                while (rs1.next()) {
+                                while (rs.next()) {
                                     // 通过字段检索
-                                    int uid = rs1.getInt("UID");
-                                    String name = rs1.getString("Name");
-                                    int total = rs1.getInt("Total");
+                                    int uid = rs.getInt("UID");
+                                    String name = rs.getString("Name");
+                                    int total = rs.getInt("Total");
 
                                     // 输出数据
                                     System.out.print(uid + "\t" + name + "\t" + total + "\n");
                                 }
-                                rs1.close(); // 关闭结果集对象
+                                rs.close(); // 关闭结果集对象
                                 break;
                             case 2:
                                 // 查询2：列出用户1的好友UID。
                                 sql = "SELECT UID2 FROM \"Schema_ljh_zzh\".Friend WHERE UID1 = 1";
-                                ResultSet rs2 = stmt.executeQuery(sql); // 执行查询语句
+                                rs = stmt.executeQuery(sql); // 执行查询语句
                                 System.out.println("用户1的好友UID：");
-                                while (rs2.next()) {
+                                while (rs.next()) {
                                     // 通过字段检索
-                                    int uid2 = rs2.getInt("UID2");
+                                    int uid2 = rs.getInt("UID2");
 
                                     // 输出数据
                                     System.out.print(uid2 + "\n");
                                 }
-                                rs2.close(); // 关闭结果集对象
+                                rs.close(); // 关闭结果集对象
                                 break;
                             case 3:
                                 // 查询3：列出每一个用户的好友数目。
                                 sql = "SELECT UID1, COUNT(*) AS Friends FROM \"Schema_ljh_zzh\".Friend GROUP BY UID1 ORDER BY UID1";
-                                ResultSet rs3 = stmt.executeQuery(sql); // 执行查询语句
+                                rs = stmt.executeQuery(sql); // 执行查询语句
                                 System.out.println("用户ID\t好友数目");
-                                while (rs3.next()) {
+                                while (rs.next()) {
                                     // 通过字段检索
-                                    int uid1 = rs3.getInt("UID1");
-                                    int friends = rs3.getInt("Friends");
+                                    int uid1 = rs.getInt("UID1");
+                                    int friends = rs.getInt("Friends");
 
                                     // 输出数据
                                     System.out.print(uid1 + "\t" + friends + "\n");
                                 }
-                                rs3.close(); // 关闭结果集对象
+                                rs.close(); // 关闭结果集对象
                                 break;
                             case 4:
                                 // 查询4：列出用户1和用户3的共同好友。
                                 sql = "SELECT f1.UID2 FROM \"Schema_ljh_zzh\".Friend f1 WHERE f1.UID1 = 1 AND f1.UID2 IN (SELECT f2.UID2 FROM \"Schema_ljh_zzh\".Friend f2 WHERE f2.UID1 = 3)";
-                                ResultSet rs4 = stmt.executeQuery(sql); // 执行查询语句
+                                rs = stmt.executeQuery(sql); // 执行查询语句
                                 System.out.println("用户1和用户3的共同好友：");
-                                while (rs4.next()) {
+                                while (rs.next()) {
                                     // 通过字段检索
-                                    int uid2 = rs4.getInt("UID2");
+                                    int uid2 = rs.getInt("UID2");
 
                                     // 输出数据
                                     System.out.print(uid2 + "\n");
                                 }
-                                rs4.close(); // 关闭结果集对象
+                                rs.close(); // 关闭结果集对象
                                 break;
                             case 5:
                                 // 查询5：统计用户1和用户3的共同好友的数量。
                                 sql = "SELECT COUNT(*) AS Common FROM \"Schema_ljh_zzh\".Friend f1, \"Schema_ljh_zzh\".Friend f2 WHERE f1.UID1 = 1 AND f2.UID1 = 3 AND f1.UID2 = f2.UID2";
-                                ResultSet rs5 = stmt.executeQuery(sql); // 执行查询语句
+                                rs = stmt.executeQuery(sql); // 执行查询语句
                                 System.out.println("用户1和用户3的共同好友的数量：");
-                                while (rs5.next()) {
+                                while (rs.next()) {
                                     // 通过字段检索
-                                    int common = rs5.getInt("Common");
+                                    int common = rs.getInt("Common");
 
                                     // 输出数据
                                     System.out.print(common + "\n");
                                 }
-                                rs5.close(); // 关闭结果集对象
+                                rs.close(); // 关闭结果集对象
                                 break;
                             case 6:
                                 // 查询6：统计每一个用户对之间的好友数量，如果他们之间没有好友就不显示，每个用户对只显示一次，比如1和2有5个好友，那么显示（1，2，5）或者（2，1，5）。
                                 sql = "SELECT f1.UID1 AS UID1_1, f2.UID1 AS UID1_2, COUNT(*) AS Mutual FROM \"Schema_ljh_zzh\".Friend f1, \"Schema_ljh_zzh\".Friend f2 WHERE f1.UID1 < f2.UID1 AND f1.UID2 = f2.UID2 GROUP BY f1.UID1, f2.UID1";
-                                ResultSet rs6 = stmt.executeQuery(sql); // 执行查询语句
+                                rs = stmt.executeQuery(sql); // 执行查询语句
                                 System.out.println("每一个用户对之间的好友数量：");
-                                while (rs6.next()) {
+                                while (rs.next()) {
                                     // 通过字段检索
-                                    int uid1 = rs6.getInt("UID1_1");
-                                    int uid2 = rs6.getInt("UID1_2");
-                                    int mutual = rs6.getInt("Mutual");
+                                    int uid1 = rs.getInt("UID1_1");
+                                    int uid2 = rs.getInt("UID1_2");
+                                    int mutual = rs.getInt("Mutual");
 
                                     // 输出数据
                                     System.out.print("(" + uid1 + "," + uid2 + "," + mutual + ")\n");
                                 }
-                                rs6.close(); // 关闭结果集对象
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 7:
+                                // 查询7：显示没有共同好友的用户对。
+                                sql = "SELECT u1.UID AS UID1, u2.UID AS UID2 FROM \"Schema_ljh_zzh\".UserInfo u1, \"Schema_ljh_zzh\".UserInfo u2 WHERE u1.UID < u2.UID AND NOT EXISTS (SELECT * FROM \"Schema_ljh_zzh\".Friend f1, \"Schema_ljh_zzh\".Friend f2 WHERE f1.UID1 = u1.UID AND f2.UID1 = u2.UID AND f1.UID2 = f2.UID2)";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("没有共同好友的用户对：");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid1 = rs.getInt("UID1");
+                                    int uid2 = rs.getInt("UID2");
+
+                                    // 输出数据
+                                    System.out.print("(" + uid1 + "," + uid2 + ")\n");
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 8:
+                                // 查询8：查询聊天记录中包含‘账号’两个字的用户聊天记录。
+                                sql = "SELECT * FROM \"Schema_ljh_zzh\".Messages WHERE Content LIKE '%账号%'";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.printf("%-8s\t%-8s\t%-16s\t%-24s\t%-8s\n", "发送者ID", "接收者ID", "内容", "发送时间",
+                                        "设备ID");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid1 = rs.getInt("UID1");
+                                    int uid2 = rs.getInt("UID2");
+                                    String content = rs.getString("Content");
+                                    Timestamp sendTime = rs.getTimestamp("SendTime");
+                                    int did = rs.getInt("DID");
+
+                                    // 输出数据
+                                    System.out.printf("%-8d\t%-8d\t%-16s\t%-24s\t%-8d\n", uid1, uid2, content, sendTime,
+                                            did);
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 9:
+                                // 查询9：查询只有聊天记录，但是没有转账记录的用户微信UID。
+                                sql = "(SELECT UID1 FROM \"Schema_ljh_zzh\".Messages UNION SELECT UID2 FROM \"Schema_ljh_zzh\".Messages) EXCEPT (SELECT UID1 FROM \"Schema_ljh_zzh\".Transfer UNION SELECT UID2 FROM \"Schema_ljh_zzh\".Transfer)";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("只有聊天记录，但是没有转账记录的用户微信UID：");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid = rs.getInt(1);
+
+                                    // 输出数据
+                                    System.out.print(uid + "\n");
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 10:
+                                // 查询10：统计用户1主动向哪些用户发送至少5条消息，列出聊天对象和消息数。
+                                sql = "SELECT UID2, COUNT(*) AS Total FROM \"Schema_ljh_zzh\".Messages WHERE UID1 = 1 GROUP BY UID2 HAVING Total >= 5";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("用户1主动向以下用户发送至少5条消息：");
+                                System.out.printf("%-8s\t%-8s\n", "聊天对象", "消息数");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid2 = rs.getInt("UID2");
+                                    int total = rs.getInt("Total");
+
+                                    // 输出数据
+                                    System.out.printf("%-8d\t%-8d\n", uid2, total);
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 11:
+                                // 查询11：按照用户统计该用户在2023年分别向哪些用户发送了多少条消息，列出用户微信UID1，接受对象的微信UID2，消息总条数。
+                                // 报错：year is supported only in B-format database
+                                sql = "SELECT UID1, UID2, COUNT(*) AS Total FROM \"Schema_ljh_zzh\".Messages WHERE date_part('year', SendTime) = 2023 GROUP BY UID1, UID2";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.printf("%-8s\t%-8s\t%-8s\n", "用户", "接受对象", "消息总条数");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid1 = rs.getInt("UID1");
+                                    int uid2 = rs.getInt("UID2");
+                                    int total = rs.getInt("Total");
+
+                                    // 输出数据
+                                    System.out.printf("%-8d\t%-8d\t%-8d\n", uid1, uid2, total);
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 12:
+                                // 查询12：查询使用‘KylinOS’登录微信账号的用户名
+                                sql = "SELECT U.Name FROM (\"Schema_ljh_zzh\".UserInfo U JOIN \"Schema_ljh_zzh\".Login L ON U.UID = L.UID) JOIN \"Schema_ljh_zzh\".Device D ON L.DID = D.DID WHERE D.Name = 'KylinOS'";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("使用‘KylinOS’登录微信账号的用户名：");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    String name = rs.getString("Name");
+
+                                    // 输出数据
+                                    System.out.print(name + "\n");
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 13:
+                                // 查询13：查询只使用KylinOS设备登录微信的用户账号
+                                sql = "SELECT UID FROM \"Schema_ljh_zzh\".Login L JOIN \"Schema_ljh_zzh\".Device D ON L.DID = D.DID GROUP BY UID HAVING COUNT(DISTINCT CASE WHEN D.Name = 'KylinOS' THEN L.DID END) = COUNT(DISTINCT L.DID)";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("只使用KylinOS设备登录微信的用户账号：");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid = rs.getInt("UID");
+
+                                    // 输出数据
+                                    System.out.print(uid + "\n");
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 14:
+                                // 查询14：至少在两种设备上登录过微信账号的用户UID
+                                sql = "SELECT UID FROM \"Schema_ljh_zzh\".Login GROUP BY UID HAVING COUNT(DISTINCT DID) >= 2";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("至少在两种设备上登录过微信账号的用户UID：");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid = rs.getInt("UID");
+
+                                    // 输出数据
+                                    System.out.print(uid + "\n");
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 15:
+                                // 查询15：查询在所有设备上均实现登录的微信用户名。
+                                /*
+                                 * sql =
+                                 * "SELECT Name FROM \"Schema_ljh_zzh\".UserInfo WHERE NOT EXISTS (SELECT * FROM \"Schema_ljh_zzh\".Device WHERE NOT EXISTS (SELECT * FROM \"Schema_ljh_zzh\".Login WHERE Login.UID = UserInfo.UID AND Login.DID = Device.DID))"
+                                 * ;
+                                 */
+                                sql = "SELECT Name FROM \"Schema_ljh_zzh\".UserInfo U JOIN ( SELECT UID FROM \"Schema_ljh_zzh\".Login GROUP BY UID HAVING COUNT(DISTINCT DID) = ( SELECT COUNT(*) FROM \"Schema_ljh_zzh\".Device ) ) AS AllDevices ON U.UID = AllDevices.UID";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("在所有设备上均实现登录的微信用户名：");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    String name = rs.getString("Name");
+
+                                    // 输出数据
+                                    System.out.print(name + "\n");
+                                }
+                                rs.close(); // 关闭结果集对象
+                                break;
+                            case 16:
+                                // 查询16：查询连续七天之内有两笔向外转账的用户微信ID
+                                sql = "SELECT DISTINCT UID1 FROM \"Schema_ljh_zzh\".Transfer t1 WHERE EXISTS ( SELECT * FROM \"Schema_ljh_zzh\".Transfer t2 WHERE t1.UID1 = t2.UID1 AND t1.SendTime < t2.SendTime AND TIMESTAMPDIFF(DAY, t1.SendTime, t2.SendTime) <= 7 )";
+                                rs = stmt.executeQuery(sql); // 执行查询语句
+                                System.out.println("连续七天之内有两笔向外转账的用户微信ID：");
+                                while (rs.next()) {
+                                    // 通过字段检索
+                                    int uid1 = rs.getInt("UID1");
+
+                                    // 输出数据
+                                    System.out.print(uid1 + "\n");
+                                }
+                                rs.close(); // 关闭结果集对象
                                 break;
                             case 0:
                                 // 返回上一级菜单
@@ -220,34 +388,34 @@ public class GaussDBDemo {
                             case 1:
                                 // 查询1：统计每一对用户之间的发送信息的数目，例如1向2发送了5条信息，同时2向1发送了4条消息，那么他们之间的消息就是9条
                                 sql = "SELECT tmp1.UID1 AS UID1_1,tmp1.UID2 AS UID1_2,tmp1.total+tmp2.total AS total FROM (SELECT UID1,UID2,Count(*) AS total FROM  Messages GROUP BY UID1,UID2) tmp1 JOIN (SELECT UID1,UID2,Count(*) AS total FROM Messages GROUP BY UID1,UID2) tmp2 ON tmp1.UID1=tmp2.uid2 and tmp1.uid2=tmp2.uid1 UNION SELECT tmp5.UID1,tmp5.UID2,tmp5.total1 FROM ((SELECT UID1,UID2,Count(*) as total1 FROM Messages GROUP BY UID1,UID2) tmp3 LEFT  JOIN (select UID1,UID2,Count(*) as total2 FROM Messages GROUP BY UID1,UID2) tmp4 ON tmp3.UID1=tmp4.uid2 and tmp3.uid2=tmp4.uid1) AS tmp5(uid1,uid2,total1,uid3,uid4,total2) WHERE total2 IS null";
-                                ResultSet rs7 = stmt.executeQuery(sql); // 执行查询语句
+                                rs = stmt.executeQuery(sql); // 执行查询语句
                                 System.out.println("每一对用户之间的发送信息的数目：");
-                                while (rs7.next()) {
+                                while (rs.next()) {
                                     // 通过字段检索
-                                    int uid1 = rs7.getInt("UID1_1");
-                                    int uid2 = rs7.getInt("UID1_2");
-                                    int total = rs7.getInt("total");
+                                    int uid1 = rs.getInt("UID1_1");
+                                    int uid2 = rs.getInt("UID1_2");
+                                    int total = rs.getInt("total");
 
                                     // 输出数据
                                     System.out.print("(" + uid1 + "," + uid2 + "," + total + ")\n");
                                 }
-                                rs7.close(); // 关闭结果集对象
+                                rs.close(); // 关闭结果集对象
                                 break;
                             case 2:
                                 // 查询2：查询2024年3月份，每一个用户转出总额，转入总额，如果两项都为零，不需要列出。如果一项有，另外一项没有，没有的显示为0。例如用户3只收到1笔1000转入金额，那么显示（3，null，1000）
                                 sql = "SELECT UID1 AS UID1_1, tmp1.AllOut AS ALLOut, tmp2.AllIn as ALLin FROM (SELECT UID1, SUM(amount) AS AllOut FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID1) tmp1 LEFT JOIN (SELECT UID2, SUM(amount) AS AllIn FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID2) tmp2 ON tmp1.UID1 = tmp2.UID2 UNION SELECT UID2, tmp3.AllOut, tmp4.AllIn FROM (SELECT UID1, SUM(amount) AS AllOut FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID1)tmp3 RIGHT JOIN (SELECT UID2, SUM(amount) AS AllIn FROM Transfer WHERE SENDTIME BETWEEN '2024-03-01 00:00:00' AND '2024-03-31 23:59:59' GROUP BY UID2) tmp4 ON tmp3.UID1 = tmp4.UID2";
-                                ResultSet rs8 = stmt.executeQuery(sql); // 执行查询语句
+                                rs = stmt.executeQuery(sql); // 执行查询语句
                                 System.out.println("每一个用户转出总额，转入总额：");
-                                while (rs8.next()) {
+                                while (rs.next()) {
                                     // 通过字段检索
-                                    int uid = rs8.getInt("UID1_1");
-                                    int allOut = rs8.getInt("AllOut");
-                                    int allIn = rs8.getInt("AllIn");
+                                    int uid = rs.getInt("UID1_1");
+                                    int allOut = rs.getInt("AllOut");
+                                    int allIn = rs.getInt("AllIn");
 
                                     // 输出数据
                                     System.out.print("(" + uid + "," + allOut + "," + allIn + ")\n");
                                 }
-                                rs8.close(); // 关闭结果集对象
+                                rs.close(); // 关闭结果集对象
                                 break;
                             case 0:
                                 // 返回上一级菜单
